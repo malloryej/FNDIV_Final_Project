@@ -38,7 +38,7 @@ timePoints = 800; %total number of timepoints being investigated; can be adjuste
 % non-ruminators at every millisecond of the ERP
 
 % Set up key variables
-groups = data.Ruminator; % creates a variable to indicate whether participant was/was not a ruminator
+groups = data.Ruminator; % creates a variable to indicate whether participant was/was not a ruminator; edit to match your category label
 channels = data.Channel; % creates a variable to hold channel information
 timepointData = table2array(data(:, 4:end)); % creates an array that holds all of the amplitudes at every channel at every timepoint
 uniqueChannels = unique(channels); % makes a list of unique channels being examined; should match input selected in preproc script
@@ -65,7 +65,7 @@ end
 %% Determine clusters %%
 % Define significance threshold
 alpha = 0.05; % Can be adapted to be more strict
-min_cluster = 1; % Minimum number of consecutive timepoints that must be lower than alpha to form cluster; can be adjusted
+min_cluster = 1; % Minimum number of consecutive timepoints; calculated with DetermineClusterSize script
 
 % Initialize empty cell for clusters and empty matrix for pval < 0.05
 % logicals (i.e. binary true or false)
@@ -129,103 +129,7 @@ for i = 1:length(clusters)
     clusters{i}.Tavg = mean(t_values_abs);
 end
 
-%% Create Null Distribution %%
-% repeats previous steps for randomized/nonsense data
 
-dataPerms = data;
-null_distribution = [];
-for perm = 1:nPermutations;
-    dataPerms.Ruminator = randi([1,2], height(data), 1); %randomizes group assignment for each participant
-
-% initialize empty array for results
-    groups = dataPerms.Ruminator;
-    channels = dataPerms.Channel;
-    timepointData = table2array(dataPerms(:, 4:end));
-    
-    resultsPerm = cell(nChannels, timePoints);
-    
-    for c = 1:length(uniqueChannels)
-        channelData = timepointData(strcmp(channels, uniqueChannels{c}), :);
-        channelGroups = groups(strcmp(channels, uniqueChannels{c}));
-        ruminatorsPerm = channelData(channelGroups == 1, :);
-        nonruminatorsPerm = channelData(channelGroups == 2, :);
-    
-        for t = 1:timePoints
-    
-        % Perform t-test
-            [h, p, ci, stats] = ttest2(ruminatorsPerm(:, t), nonruminatorsPerm(:, t));
-            resultsPerm{c, t} = struct('t_stat', stats.tstat, 'pval', p);
-        end
-    end
-
-    clustersPerm = {};
-    cluster_idxPerm = 1;
-    sig_maskPerm = zeros(nChannels, timePoints);
-    
-    % loop through significance values in each channel
-    for c = 1:nChannels;
-        for t = 1:timePoints;
-            sig_maskPerm(c, t) = resultsPerm{c, t}.pval < 0.05; % extracts pval from results cell
-        end
-    end
-    
-    % counts number of consecutive sig pvalues in each channel
-    for c = 1:nChannels;
-        cons_sigs = 0; %lets you index consecutive significant p-vals
-        cluster_start = NaN; % initialize cluster start time
-    
-        % loops through time point in each channel; if there is a significant
-        % time point, cons_sigs tracker increases by 1. if cons_sigs was
-        % previously set to zero, a new cluster begins
-        for t = 1:size(sig_maskPerm, 2);
-            if sig_maskPerm(c, t);
-                if cons_sigs == 0;
-                    cluster_start = t;
-                end
-                cons_sigs = cons_sigs + 1;
-    
-                % if not significant, check to see if cluster is large enough
-                % to be considered significant; otherwise, starts back at the
-                % next iteration of the timepoint for loop
-            else
-                if cons_sigs >= min_cluster;
-                    clustersPerm{cluster_idxPerm} = struct('Channel', uniqueChannels{c}, 'StartTime', cluster_start, 'EndTime', t-1);
-                    cluster_idxPerm = cluster_idxPerm + 1;
-                end
-                cons_sigs = 0;
-                cluster_start = NaN;
-            end
-        end
-    
-        % if cluster continues until end, include that cluster in the cell
-        if cons_sigs >= min_cluster;
-            clustersPerm{cluster_idxPerm} = struct('Channel', uniqueChannels{c}, 'StartTime', cluster_start, 'EndTime', size(sig_mask,2));
-            cluster_idx = cluster_idxPerm + 1;
-        end
-    end
-    
-    % average t-statistics for each cluster %
-    TList = [];
-    for i = 1:length(clustersPerm)
-        ch_name = clustersPerm{i}.Channel;
-        start_time = clustersPerm{i}.StartTime;
-        end_time = clustersPerm{i}.EndTime;
-    
-        ch_idxPerm = find(strcmp(uniqueChannels, ch_name)); % links channel number back to the channel label
-        
-        % Extract t-statistics from results within the cluster time range
-        t_values_abs = abs(arrayfun(@(t) results{ch_idxPerm, t}.t_stat, start_time:end_time));
-        
-        % Sum of t-statistics for the cluster
-        clustersPerm{i}.Tavg = mean(t_values_abs);
-        TList = [TList, clustersPerm{i}.Tavg];
-    end
-    null_distribution = [null_distribution, max(TList)];
-end
-
-%% Extract value for the 95th percentile of data in the null distribution %%
-
-null_percentile_95th = prctile(null_distribution, 95)
 
 %% Compare magnitude of cluster effect size (i.e. sum of t-vals for each significant timepoint at an electrode) to the 95th percentile value of the null_distribution
 sig_clusters = {};
