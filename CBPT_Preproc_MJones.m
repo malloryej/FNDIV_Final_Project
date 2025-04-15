@@ -1,6 +1,6 @@
 %% Preprocessing script for Cluster Based Permutation Testing script
-% Designed for data minimally pre-processed in BrainVision Analyzer version 2.3
-    % minimal preprocessing includes interpolation of channels *(where necessary), 
+% Designed for data pre-processed in BrainVision Analyzer version 2.3
+    % preprocessing includes interpolation of channels *(where necessary), 
     % ocular correction, artifact rejection, segmentation, and averaging of
     % ERPs across trials
 % takes in a folder with a csv file with ERP data for each participant
@@ -18,9 +18,9 @@
 % Mallory Jones 2025
 
 %% Set folder path and initialize variables
-folderPath = "C:\Users\mallo\OneDrive\Desktop\ClusterBasedPermutationTesting\.csvFiles\";
+folderPath = "C:\Users\mallo\OneDrive\Desktop\ClusterBasedPermutationTesting\Data\InputData\datFiles\datFiles_StimorInhib";
 files = dir(fullfile(folderPath, '*.csv'));
-SubID_RumKey = readtable("C:\Users\mallo\OneDrive\Desktop\ClusterBasedPermutationTesting\SubList_StimType.xlsx");
+SubID_condKey = readtable("C:\Users\mallo\OneDrive\Desktop\ClusterBasedPermutationTesting\Data\InputData\PreprocData\SubList_StimType.xlsx");
 
 %% Create a list of subIDs
 SubList = table();
@@ -35,13 +35,13 @@ end
 SubList.Properties.VariableNames = "SubID";
 
 %% Reconstruct single table with data from all timepoints for each participant
-allData = table()
+allData = table();
 for sub = 1:height(SubList); % loops through subID list made in previous step
     subData = readtable(fullfile(folderPath, SubList.SubID(sub)));
     numRows = height(subData);
     subIDColumn = repmat(SubList.SubID(sub), numRows, 1); %repeats subject ID for number of rows associated with that participant's data
     subData.subID = subIDColumn; % adds subID column to the new table
-    subStimColumn = repelem(SubID_RumKey.StimType(sub), numRows, 1); % uses subID "key" to assign participants to a group 
+    subStimColumn = repelem(SubID_condKey.StimType(sub), numRows, 1); % uses subID "key" to assign participants to a group 
     subData.stimType = subStimColumn; % adds group membership identifier to 
     subData = subData(:, [end, 1:end-1]);
     subData = subData(:, [end, 1:end-1]);
@@ -53,11 +53,12 @@ varNames = ["SubID", "Ruminator", "Channel"]; % Initiate list for timepoint vari
 count = 0;
 for col = 1:(width(allData) - 3);
     count = count + 1;
-    varNames = [varNames, strcat("T" + count)];
+    varNames = [varNames, strcat("Time" + count)];
 end
 
 allData.Properties.VariableNames = varNames; % assigns variable names in new datatable
 
 allData = allData(ismember(allData.Channel, ["FCz", "Fz", "Cz"]), :); %editable! Can add any channels by adding the string name for the channel
 
-writetable(allData, "C:\Users\mallo\OneDrive\Desktop\ClusterBasedPermutationTesting\TrialData.csv") % Saves data as csv file; can change file name here
+writetable(allData, "C:\Users\mallo\OneDrive\Desktop\ClusterBasedPermutationTesting\Data\InputData\" + ...
+    "PreprocData\TrialData.csv") % Saves data as csv file; can change file name here
