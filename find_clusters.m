@@ -1,27 +1,47 @@
 %% Create function to Identify Clusters in Data
-function listlengths = find_clusters(significant_mask)
-    listlengths = [];
-    [num_rows, num_cols] = size(significant_mask);
+function clusterResults = find_clusters(strucResults, alpha, min_size)
+    % Output structure
+    clusterResults = struct('Channel', {}, 'Timepoint_start', {}, 'Timepoint_end', {});
 
-    for row = 1:num_rows
-        cluster_length = 0;
+    % Get unique channels
+    channels = unique({strucResults.Channel});
+    clusterIdx = 1;
 
-        for col = 1:num_cols
-            if significant_mask(col) == 1
-                cluster_length = cluster_length + 1;
+    for ch = 1:length(channels)
+        thisChannel = channels{ch};
 
-            elseif cluster_length > 0 % only add to listlengths if cluster length > 0
-                % ends current cluster; resets variables
-                listlengths = [listlengths, cluster_length];
-                cluster_length = 0;
+        % Filter results for this channel
+        chResults = strucResults(strcmp({strucResults.Channel}, thisChannel));
 
+        % Sort by timepoint (optional but safer)
+        [~, sortIdx] = sort([chResults.Timepoint]);
+        chResults = chResults(sortIdx);
+
+        % Create logical vector of significance
+        sigVec = [chResults.PVal] < alpha;
+        tPoints = [chResults.Timepoint];
+
+        % Find clusters of contiguous 1s
+        t = 1;
+        while t <= length(sigVec)
+            if sigVec(t)
+                startT = t;
+                while t <= length(sigVec) && sigVec(t)
+                    t = t + 1;
+                end
+                endT = t - 1;
+
+                % Check if cluster length meets minimum size
+                clusterLength = tPoints(endT) - tPoints(startT) + 1; % assumes timepoints are in ms and consecutive
+                if clusterLength >= min_size
+                    clusterResults(clusterIdx).Channel = thisChannel;
+                    clusterResults(clusterIdx).Timepoint_start = tPoints(startT);
+                    clusterResults(clusterIdx).Timepoint_end = tPoints(endT);
+                    clusterIdx = clusterIdx + 1;
+                end
+            else
+                t = t + 1;
             end
-        end
-
-        if cluster_length > 0
-            listlengths = [listlengths, cluster_length];
-            % handle cases where last timepoint is still in cluster
-
         end
     end
 end

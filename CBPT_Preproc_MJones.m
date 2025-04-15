@@ -40,23 +40,40 @@ for sub = 1:height(SubList); % loops through subID list made in previous step
     subData = readtable(fullfile(folderPath, SubList.SubID(sub)));
     numRows = height(subData);
     subIDColumn = repmat(SubList.SubID(sub), numRows, 1); %repeats subject ID for number of rows associated with that participant's data
-    subData.subID = subIDColumn; % adds subID column to the new table
-    subStimColumn = repelem(SubID_condKey.StimType(sub), numRows, 1); % uses subID "key" to assign participants to a group 
-    subData.stimType = subStimColumn; % adds group membership identifier to 
-    subData = subData(:, [end, 1:end-1]);
-    subData = subData(:, [end, 1:end-1]);
+    subData.SubID = subIDColumn; % adds subID column to the new table
+    subGroupColumn = repelem(SubID_condKey.StimType(sub), numRows, 1); % uses subID "key" to assign participants to a group 
+    subData.Group = subGroupColumn; % adds group membership identifier
+    for i = 1:width(subData)
+        colData = subData{:,i};
+        if any(strcmp(colData, 'Cz'));
+            subData.Properties.VariableNames{i} = 'Channel';
+            break
+        end
+    end
+    %subData = subData(:, [end, 1:end-1]);
+    %subData = subData(:, [end, 1:end-1]);
     allData = vertcat(allData, subData);
 end
 
+%% Update Variable Order and Names
+colsToMove = {'SubID', 'Group'};  % columns you want at the beginning
+allVars = allData.Properties.VariableNames;
+newOrder = [colsToMove, setdiff(allVars, colsToMove, 'stable')];
+allData = allData(:, newOrder);
 
-varNames = ["SubID", "Ruminator", "Channel"]; % Initiate list for timepoint variable names; starts by naming the first column "Channels"
-count = 0;
-for col = 1:(width(allData) - 3);
-    count = count + 1;
-    varNames = [varNames, strcat("Time" + count)];
-end
+% Define fixed columns
+fixedCols = {'SubID', 'Group', 'Channel'};
 
-allData.Properties.VariableNames = varNames; % assigns variable names in new datatable
+% Identify timepoint columns (everything else)
+timeCols = setdiff(allData.Properties.VariableNames, fixedCols, 'stable');
+
+% Build full list of new variable names
+varNames = [fixedCols, strcat("Time", string(1:length(timeCols)))];
+
+% Assign new variable names
+allData.Properties.VariableNames = varNames;
+
+%% write table as csv
 
 allData = allData(ismember(allData.Channel, ["FCz", "Fz", "Cz"]), :); %editable! Can add any channels by adding the string name for the channel
 
