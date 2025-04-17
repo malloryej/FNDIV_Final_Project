@@ -1,6 +1,6 @@
 %% Create function to perform tTests on null data
 
-function resultsStruct = perform_tTests(data, chanList, interestVar)
+function resultsStruct = perform_tTests(data, chanList)
 
     row = 1; % count where data will be added to structured result array
 
@@ -18,8 +18,8 @@ function resultsStruct = perform_tTests(data, chanList, interestVar)
         chanData = data(strcmp(data.Channel, chan), :);
 
         % Separate Groups
-        group1 = chanData(chanData.(interestVar) == 1, :);
-        group2 = chanData(chanData.(interestVar) == 2, :);
+        group1 = chanData(chanData.Group == 1 & strcmp(chanData.Channel, char(chan)), :);
+        group2 = chanData(chanData.Group == 2 & strcmp(chanData.Channel, char(chan)), :);
         group1Data = table2array(group1(:, timepointCols));
         group2Data = table2array(group2(:, timepointCols));
 

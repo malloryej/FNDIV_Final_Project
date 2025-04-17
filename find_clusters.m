@@ -1,47 +1,43 @@
-%% Create function to Identify Clusters in Data
-function clusterResults = find_clusters(strucResults, alpha, min_size)
+% Creates function to identify clusters
+
+function clusterResults = find_clusters(strucResults, alpha)
     % Output structure
-    clusterResults = struct('Channel', {}, 'Timepoint_start', {}, 'Timepoint_end', {});
+    clusterResults = struct('Channel', {}, ...
+                            'Timepoint_start', {}, ...
+                            'Timepoint_end', {}, ...
+                            'Cluster_length', {});
 
-    % Get unique channels
-    channels = unique({strucResults.Channel});
-    clusterIdx = 1;
+    clusterIDX = 1;
+    i = 1;
 
-    for ch = 1:length(channels)
-        thisChannel = channels{ch};
+    while i <= length(strucResults)
+        % Start of potential cluster
+        if strucResults(i).PVal <= alpha
+            currentChannel = strucResults(i).Channel;
+            startTime = strucResults(i).Timepoint;
+            endTime = startTime;
 
-        % Filter results for this channel
-        chResults = strucResults(strcmp({strucResults.Channel}, thisChannel));
+            % Continue while conditions are met
+            j = i + 1;
+            while j <= length(strucResults) && ...
+                  strucResults(j).PVal <= alpha && ...
+                  strucResults(j).Channel == currentChannel && ...
+                  strucResults(j).Timepoint == endTime + 1
 
-        % Sort by timepoint (optional but safer)
-        [~, sortIdx] = sort([chResults.Timepoint]);
-        chResults = chResults(sortIdx);
-
-        % Create logical vector of significance
-        sigVec = [chResults.PVal] < alpha;
-        tPoints = [chResults.Timepoint];
-
-        % Find clusters of contiguous 1s
-        t = 1;
-        while t <= length(sigVec)
-            if sigVec(t)
-                startT = t;
-                while t <= length(sigVec) && sigVec(t)
-                    t = t + 1;
-                end
-                endT = t - 1;
-
-                % Check if cluster length meets minimum size
-                clusterLength = tPoints(endT) - tPoints(startT) + 1; % assumes timepoints are in ms and consecutive
-                if clusterLength >= min_size
-                    clusterResults(clusterIdx).Channel = thisChannel;
-                    clusterResults(clusterIdx).Timepoint_start = tPoints(startT);
-                    clusterResults(clusterIdx).Timepoint_end = tPoints(endT);
-                    clusterIdx = clusterIdx + 1;
-                end
-            else
-                t = t + 1;
+                endTime = strucResults(j).Timepoint;
+                j = j + 1;
             end
+
+            % Save cluster
+            clusterResults(clusterIDX).Channel = currentChannel;
+            clusterResults(clusterIDX).Timepoint_start = startTime;
+            clusterResults(clusterIDX).Timepoint_end = endTime;
+            clusterResults(clusterIDX).Cluster_length = endTime - startTime + 1;
+
+            clusterIDX = clusterIDX + 1;
+            i = j;  % continue from after this cluster
+        else
+            i = i + 1;
         end
     end
 end

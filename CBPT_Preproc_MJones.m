@@ -1,19 +1,19 @@
-%% Preprocessing script for Cluster Based Permutation Testing script
-% Designed for data pre-processed in BrainVision Analyzer version 2.3
-    % preprocessing includes interpolation of channels *(where necessary), 
-    % ocular correction, artifact rejection, segmentation, and averaging of
-    % ERPs across trials
-% takes in a folder with a csv file with ERP data for each participant
-% reconstructs data from all individual suject files into one table
-% formats one table to be compatable with ClusterBasedPermutationTesting
-% script
-% REQUIREMENTS
-    % SubID "key" that decodes which subject ID is associated with either
-        % condition (i.e. ruminator vs nonruminator
-    % folder that contains files directly exported from BrainVision analyzer
-        % should have one file for each participant that contains data for
-        % ERP averaged over trials at every millisecond for each channel
-        % recorded
+% Preprocessing for Cluster Based Permutation Testing - written for data
+% collected with predictive T-Maze task using 32 electrode EEG montage
+
+% Designed for data pre-processed in BrainVision Analyzer version 2.3.
+% Preprocessing includes interpolation of channels *(where necessary),
+% ocular correction, artifact rejection, segmentation, and averaging of
+% ERPs across trials. 
+
+% takes in a folder with a csv file with
+% ERP data for each participant reconstructs data from all individual
+% suject files into one table formats one table REQUIREMENTS SubID "key"
+% that decodes which subject ID is associated with either condition (i.e.
+% ruminator vs nonruminator or excitatory vs inhibitory TMS protocol); a
+% folder that contains files directly exported from BrainVision analyzer -
+% there should be one file for each participant that contains data for ERP
+% averaged over trials at every millisecond for each channel recorded.
 
 % Mallory Jones 2025
 
@@ -76,6 +76,3 @@ allData.Properties.VariableNames = varNames;
 %% write table as csv
 
 allData = allData(ismember(allData.Channel, ["FCz", "Fz", "Cz"]), :); %editable! Can add any channels by adding the string name for the channel
-
-writetable(allData, "C:\Users\mallo\OneDrive\Desktop\ClusterBasedPermutationTesting\Data\InputData\" + ...
-    "PreprocData\TrialData.csv") % Saves data as csv file; can change file name here
