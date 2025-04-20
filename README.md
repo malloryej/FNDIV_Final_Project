@@ -14,6 +14,8 @@ This code is meant for ERP data preprocessed using BrainVision Analyzer v 2.3. T
 1. Clone the repository
 ``` bash
 git clone https://github.com/malloryej/FNDIV_Final_Project.git
+```
+
 2. Open MLX file. Edit parameters in first cell.
 	- NOTE: this script assumes a -200 to 800 milisecond ERP where -200 to 0 are treated as baseline. If using a different time scale, the linspace functions for data visualization will need to be updated to reflect the appropriate time window.
 
