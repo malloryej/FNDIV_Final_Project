@@ -24,9 +24,10 @@ git clone https://github.com/malloryej/FNDIV_Final_Project.git
 2. Create a null distribution. The null distribution randomizes the data and searches for clusters. Timepoints are significant at a p-val <= 0.01. This is also editable (null_alpha in the parameters cell). The 95th percentile value is extracted and acts as the minimum cluster size against which to test true data clusters.
 3. Generate final data visualization. Similar to the raw data visualization, this will generate an average ERP for both groups plotted on top of one another. The standard error is shaded around the lines and the time range for significant clusters is shaded in grey.
 
-# Project Structure
-├── data/              % contains folders for csv files; each dataset has its own folder with csv files for each participant. Also includes cond keys
-├── datFiles_[DATASET]/            % contains individual csv files for each participant for an experiment
-├── MFiles/                 % independent component .m files that are used to make up the MLX file. includes function scripts
-├── CBPT_MLX              % Markdown file that runs cluster based permutation testing
-└── README.md             % This file
+Project Structure
+│
+├── data/                # Contains subfolders for each dataset with CSVs per participant. Also includes condition keys.
+├── datFiles_[DATASET]/  # Contains individual CSV files for each participant in a given experiment.
+├── MFiles/              # Independent .m files used in the MLX script (functions, processing scripts, etc.).
+├── CBPT_MLX.mlx         # Main Live Script that runs the full cluster-based permutation testing pipeline.
+└── README.md            # This file.
