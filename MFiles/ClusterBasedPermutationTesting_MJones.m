@@ -2,25 +2,13 @@
 % written for data collected with predictive T-Maze task using 32 electrode EEG montage
 % preprocessed and exported from BrainVision Analyzer v 2.3.0
 % Two primary components of this script:
-    % 1) Parametric testing and clustering (Quantifying effect at every timepoint) - T-test at every millisecond of the ERP
-        % T-test is used in this case for rumination data (i.e. either high
-        % or low)
-        % After testing, identify all effects greater than some parameter
-        % (i.e. alpha < 0.05 or alpha < 0.01)
-        % AVERAGE OR SUM all t-statistics or F-values at each electrode across all time points
-            % This script specifies a cluster as having a significance values
-            % (i.e. p-value) < 0.05 over the course of 10 or more consecutive
-            % milliseconds.
-                % These cluster parameters can be changed based on the user's preferences
-    % 2) Permutation testing
-        % Randomly redistribute or "scramble" data and reassign to two new
-        % groups
-        % repeat parametric testing and clustering steps nPermutations times to
-        % create a null distribution; you will choose the largest effect
-        % size from each permutation to add to the null distribution (i.e.
-        % null distribution will consist of nPermutations total measures)
-        % clusters with SUM OR AVERAGE of test statistics >= than the 95
-        % percentile will be considered significant
+% 1) Permutation testing - randomly redistributes or "scrambles" data and reassigns to 
+    % groups for nPermutations. Each permutation will result in a structured array of clusters. 
+    % The largest cluster (i.e. the one with the most consecutively significant [at p <= 0.01] milliseconds) 
+    % from each permutation will be added to the null distribution.
+% 2) Parametric testing - T-test conducted at every millisecond of the ERP. 
+    % After testing, clusters are computed. Clusters of size >= the 95th percentile of the null distribution 
+    % will be considered significant at the 0.05 alpha level.
 
 % Mallory Jones 2025
 
@@ -38,7 +26,7 @@ timePoints = 800; %total number of timepoints being investigated; can be adjuste
 % non-ruminators at every millisecond of the ERP
 
 % Set up key variables
-groups = data.Ruminator; % creates a variable to indicate whether participant was/was not a ruminator; edit to match your category label
+groups = data.Group; % creates a variable to indicate whether participant was/was not a ruminator; edit to match your category label
 channels = data.Channel; % creates a variable to hold channel information
 
 varNames = data.Properties.VariableNames;
@@ -47,7 +35,7 @@ timepointCols = varNames(startsWith(varNames, 'Time')); % creates an array that 
 uniqueChannels = unique(channels); % makes a list of unique channels being examined; should match input selected in preproc script
 
 % initialize empty array for results
-results = perform_tTests(data, uniqueChannels, 'Ruminator')
+results = perform_tTests(data, uniqueChannels, 'Group')
 
 
 %% Determine clusters %%
